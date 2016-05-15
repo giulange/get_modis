@@ -1,14 +1,16 @@
 %% mosaic all tiles of the same day for all days found in folder
+% See this useful link:
+%   https://jgomezdans.github.io/stitching-together-modis-data.html
 
 %% PARs
 %% -- NON-PARAMETRIC
-DIR_IN      = '/media/DATI/db-backup/MODIS/trial';
-DIR_OUT     = '/media/DATI/db-backup/MODIS/ndvi';
+DIR_IN      = '/media/DATI/db-backup/MODIS/hdf-it';
+DIR_OUT     = '/media/DATI/db-backup/MODIS/vrt';
 PRODUCT     = 'MOD13Q1.006';
 SDOY        = 1;
-EDOY        = 26;
+EDOY        = 366;
 %% -- PARAMETRIC
-YEARS       = 2000:2001;
+YEARS       = 2001:2001;
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};
 BAND        = 'NDVI';
 %% pre
@@ -27,7 +29,10 @@ gdalinfo = @(y,doy,t) ['gdalinfo ', fullfile(DIR_IN, ...
 
 % Produce the mosaic:
 % gdalbuildvrt mosaik.vrt 'HDF4_EOS:EOS_GRID:"MOD13Q1.A2014225.h18v04.006.2015289162913.hdf":MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI' 'HDF4_EOS:EOS_GRID:"MOD13Q1.A2014225.h18v05.006.2015289162858.hdf":MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI'
-gdalbuildvrt = @(y,doy) ['gdalbuildvrt ',fullfile(DIR_OUT,[BAND,'_A',num2str(y),doy,'.vrt'])];
+%gdalbuildvrt = @(y,doy) ['gdalbuildvrt ',fullfile(DIR_OUT,[BAND,'_A',num2str(y),doy,'.vrt'])];
+gdalbuildvrt = @(y,doy) ['gdalbuildvrt ',fullfile(DIR_OUT,  ...
+                         [BAND,'_A',num2str(y),doy,'_',PRODUCT,'.vrt']) ...
+                        ];
 %% batch mosaic
 % The script mosaics the tiles of the same day in one vrt file which can be
 % easily managed with gdalwarp to apply custom reference system and file
@@ -83,6 +88,7 @@ for y=1:numel(YEARS)
     end
     % Unique available days:
     uaDays = unique(aDays);
+    if isempty(uaDays{1}), uaDays(1)=[];, end
     
     % loop on all available days in folder and skip those days outside the
     % range SDOY:EDOY

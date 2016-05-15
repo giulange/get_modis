@@ -1,4 +1,7 @@
 % This script downloads MODIS files automatically
+% See this link as reference:
+%   https://jgomezdans.github.io/downloading-modis-data-with-python.html 
+
 %% PARs
 %% -- NON-PARAMETRIC
 PLATFORM    = 'MOLT'; % type: MOLA, MOLT or MOTA
