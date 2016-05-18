@@ -10,7 +10,7 @@ PRODUCT     = 'MOD13Q1.006';
 SDOY        = 1;
 EDOY        = 366;
 %% -- PARAMETRIC
-YEARS       = 2001:2001;
+YEARS       = 2002:2016;
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};
 BAND        = 'NDVI';
 %% pre
@@ -22,17 +22,19 @@ LIST        = {LIST.name}';
 % Get the full name of layer and band in hdf:
 % gdalinfo /media/DATI/db-backup/MODIS/trial/MOD13Q1.A2001001.h18v04.006.2015140084914.hdf | grep NDVI | grep '_NAME'
 
-gdalinfo = @(y,doy,t) ['gdalinfo ', fullfile(DIR_IN, ...
-                        [PRODUCT(1:Fpoint-1),'.A',num2str(y),doy,'.',t,'.',...
-                         PRODUCT(Fpoint+1:end),'*.hdf']),...
-                       ' | grep ',BAND,' | grep ''_NAME'''];
+gdalinfo_getBandName = @(y,doy,t) ...
+                       ['gdalinfo ', fullfile(DIR_IN, ...
+                         [PRODUCT(1:Fpoint-1),'.A',num2str(y),doy,'.',t,'.',...
+                          PRODUCT(Fpoint+1:end),'*.hdf']),...
+                        ' | grep ',BAND,' | grep ''_NAME'''];
 
 % Produce the mosaic:
 % gdalbuildvrt mosaik.vrt 'HDF4_EOS:EOS_GRID:"MOD13Q1.A2014225.h18v04.006.2015289162913.hdf":MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI' 'HDF4_EOS:EOS_GRID:"MOD13Q1.A2014225.h18v05.006.2015289162858.hdf":MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI'
 %gdalbuildvrt = @(y,doy) ['gdalbuildvrt ',fullfile(DIR_OUT,[BAND,'_A',num2str(y),doy,'.vrt'])];
-gdalbuildvrt = @(y,doy) ['gdalbuildvrt ',fullfile(DIR_OUT,  ...
-                         [BAND,'_A',num2str(y),doy,'_',PRODUCT,'.vrt']) ...
-                        ];
+gdalbuildvrt_createMosaic = @(y,doy) ...
+                    ['gdalbuildvrt ',fullfile(DIR_OUT,  ...
+                    	[BAND,'_A',num2str(y),doy,'_',PRODUCT,'.vrt']) ...
+                    ];
 %% batch mosaic
 % The script mosaics the tiles of the same day in one vrt file which can be
 % easily managed with gdalwarp to apply custom reference system and file
@@ -77,6 +79,9 @@ for y=1:numel(YEARS)
         continue
     end
     
+    % display the current year:
+    fprintf('YEAR: %d\n',YEARS(y));
+
     % Available days:
     aDays = cell(size(LIST));
     for ii=1:numel(LIST)
@@ -88,16 +93,17 @@ for y=1:numel(YEARS)
     end
     % Unique available days:
     uaDays = unique(aDays);
-    if isempty(uaDays{1}), uaDays(1)=[];, end
+    if isempty(uaDays{1}), uaDays(1)=[]; end
     
     % loop on all available days in folder and skip those days outside the
     % range SDOY:EDOY
     for d=1:numel(uaDays)
         % if available day is outside defined range, skip
         if str2double(uaDays{d})<SDOY || str2double(uaDays{d})>EDOY
-            fprintf('DOY=%s skipped!\n',uaDays{d})
+            fprintf('\tDOY=%s skipped!\n',uaDays{d})
             continue
         end    
+        fprintf('\tDOY=%s included!\n',uaDays{d})
         
         Ftiles = strfind(aDays,uaDays{d});
         
@@ -120,24 +126,28 @@ for y=1:numel(YEARS)
             continue
         end
         
-        str = gdalbuildvrt(YEARS(y),uaDays{d});
+        % |02| gdalbuildvrt mosaik.vrt ...
+        str = gdalbuildvrt_createMosaic(YEARS(y),uaDays{d});
         % Collect correct band from each tile
         %band_tiles = cell(size(TILES));
         for t=1:numel(TILES)
-            clear reply
-            %gdalinfo MOD13Q1.A2014225.h18v04.006.2015289162913.hdf| grep NDVI | grep '_NAME'
-            [~,reply] = system( gdalinfo(YEARS(y),uaDays{d},TILES{t}) );
+            % |01| gdalinfo MOD13Q1.A2014225.h18v04.006.2015289162913.hdf| grep NDVI | grep '_NAME'
+            fprintf('Running...\n\t%s\n', gdalinfo_getBandName(YEARS(y),uaDays{d},TILES{t}) )
+            [~,reply] = system( gdalinfo_getBandName(YEARS(y),uaDays{d},TILES{t}) );
+            fprintf('%s\n',reply)
             % remove trailing blanks from end of string
             reply=deblank(reply);
             % extract band name:
             Feq=strfind(reply,'=');
             %band_tiles{t}=reply(Feq+1:end);
             
+            % |02| gdalbuildvrt mosaik.vrt ...
             % mosaic with gdal:
-            % gdalbuildvrt mosaik.vrt ...
             str = [str,' ''',reply(Feq+1:end),''''];
         end
+        fprintf('Running...\n\t%s\n', str )
         [a,reply] = system( str );
+        fprintf('%s\n',reply)
     end
 end
 

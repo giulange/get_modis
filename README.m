@@ -26,8 +26,13 @@
 %                        reference system. The developer is planning to set
 %                        an option with which create yearly stacks for a
 %                        ROI.
-%                        fnc() ––> gdalinfo_getBandName=@gdalinfo()
-%                                  gdalbuildvrt_createMosaic=@gdalbuildvrt()
+%               case#1
+%                        fnc() ––> gdalbuildvrt=@gdalbuildvrt()
+%                                  gdal_translate=@gdal_translate()
+%               case#2
+%                        fnc() ––> gdalwarp=@gdalwarp()
+%                                  gdal_merge=@gdal_merge.py()
+%               any
 %                        pars  ––> product, start/end DOY, years, tiles,
 %                                  band
 % 
