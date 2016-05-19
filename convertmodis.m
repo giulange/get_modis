@@ -167,7 +167,7 @@ for y=1:numel(YEARS)
         % e.g. 'NDVI_A2001-MOD13Q1.006.tif'
         % |04| create a yearly stack of images
         fprintf('%s\n','The yearly stack creation is de-activated because gdal_merge.py currently does not work!')
-        if 1% I need to install a working copy of gdal_merge.py before to activate this block
+        if 0% I need to install a working copy of gdal_merge.py before to activate this block
             oTif = [BAND,'_A',num2str(YEARS(y)),'_',PRODUCT,'.tif'];
             fprintf( 'Running...\n\t%s\n', gdal_merge(iTifs,oTif) )
             [~,reply] = system( gdal_merge(iTifs,oTif) );
