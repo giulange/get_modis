@@ -1,19 +1,19 @@
 %% PARs
 %% -- NON-PARAMETRIC
-DIR_IN      = '/media/DATI/db-backup/MODIS/vrt';
-% DIR_OUT     = '/media/DATI/db-backup/MODIS/tif';
 PRODUCT     = 'MOD13Q1.006';
 DOY_LIST    = { '001';'017';'033';'049';'065';'081';'097';'113';'129';...
                 '145';'161';'177';'193';'209';'225';'241';'257';'273';...
                 '289';'305';'321';'337';'353'; };
 %% -- PARAMETRIC
+% DIR_IN      = '/media/DATI/db-backup/MODIS/vrt';
+DIR_IN      = '/media/DATI/db-backup/MODIS/tif';
 YEARS       = 2001:2016;
 BAND        = 'NDVI';% which data to be extracted by original .hdf files
-FORMAT      = 'vrt';% output format for end-product files {vrt,tif,hdf}
+FORMAT      = 'tif';% output format for end-product files {vrt,tif,hdf}
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};% considered only in case of hdf
 %% pre
 % e.g. NDVI_A2006033_MOD13Q1.006.vrt
-LIST        = dir( fullfile(DIR_IN, [BAND,'_A*_',PRODUCT,'.vrt']) );
+LIST        = dir( fullfile(DIR_IN, [BAND,'_A*_',PRODUCT,'.',FORMAT]) );
 LIST        = {LIST.name}';
 %% main
 
@@ -37,7 +37,6 @@ if ~isempty(iB)
     for ii=1:numel(iB),fprintf('%d ',YEARS(iB(ii))),end
     fprintf(' }\n\n')
 end
-
 
 % display the general msg:
 fprintf('Missing DOYs\n');
@@ -85,11 +84,7 @@ for y=1:numel(YEARS)
             fprintf('''%s'';', uaDays{iAd(jj)} )
         end
         fprintf(' }\n');
-    end
-    
-    
-
-    
+    end    
 end
 
 
