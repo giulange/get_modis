@@ -41,3 +41,18 @@
 %   ll /usr/bin/*gdal*
 %   ll /usr/local/bin/*gdal*
 
+% Run MatLab without desktop:
+matlab -nojvm -nodisplay -nosplash
+
+% Run a matlab script by command line:
+matlab -nojvm -nodisplay -nosplash < stackcreatemodis.m
+
+% To run the batch script executing gdal_merge.py on ftp-pedology, I need
+% to substitute a string in bash script:
+sudo sed -i 's/DATI/FTP/g' batch_gdalmerge
+% Run the above coomand being at
+giuliano@ftp-pedology-unina:/media/FTP/db-backup/MODIS/tif
+
+% to check the stacks created, you can:
+ls *A20??_MOD* -lah
+
