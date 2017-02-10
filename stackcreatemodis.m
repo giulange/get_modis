@@ -6,11 +6,11 @@ DOY_LIST    = { '001';'017';'033';'049';'065';'081';'097';'113';'129';...
                 '289';'305';'321';'337';'353'; };
 %% -- PARAMETRIC
 DIR_IN      = '/media/DATI/db-backup/MODIS/tif';
-DIR_OUT     = '/media/DATI/db-backup/MODIS/tif';
-YEARS       = 2001:2016;
-BAND        = 'NDVI';% which data to be extracted by original .hdf files
-iFORMAT      = 'tif';% input  format for end-product files
-oFORMAT      = 'tif';% output format for end-product files
+DIR_OUT     = '/media/DATI/db-backup/MODIS/stack';
+YEARS       = 2004;%2001:2016;
+BAND        = 'VIQuality';% {NDVI,VIQuality}
+iFORMAT     = 'tif';% input  format for end-product files
+oFORMAT     = 'tif';% output format for end-product files
 %% pre
 Fpoint      = strfind(PRODUCT,'.');
 LIST        = dir( fullfile(DIR_IN, [BAND,'_A*_',PRODUCT,'.',iFORMAT]) );
@@ -128,18 +128,21 @@ for y=1:numel(YEARS)
         [~,reply] = system( gdal_merge(iTifs,oTif) );
         CMD{y} = gdal_merge(iTifs,oTif);
         isFine = ~isempty(strfind(reply,'100')) && ~isempty(strfind(reply,'done'));
-        fprintf('%s=%d\n','fine',isFine)
+        fprintf('%s=%d\n','good',isFine)
     else
-        fprintf('%5s%s=%d\n','','fine',0)
+        fprintf('%5s%s=%s\n','','good',false)
     end
     fprintf('\n')
 end
 %% temporary print in file, while gdal_merge.py does not work
+
+CMD_tmp = strrep(CMD,'DATI','FTP');
+
 fid = fopen( fullfile(DIR_IN,'batch_gdalmerge') ,'w');
 fprintf(fid,'#!/bin/bash\n');
-for ii=1:numel(CMD)
-    if ~isempty( CMD{ii} )
-        fprintf(fid,'%s\n',CMD{ii});
+for ii=1:numel(CMD_tmp)
+    if ~isempty( CMD_tmp{ii} )
+        fprintf(fid,'%s\n',CMD_tmp{ii});
     end
 end
 fclose(fid);

@@ -6,10 +6,11 @@ DOY_LIST    = { '001';'017';'033';'049';'065';'081';'097';'113';'129';...
                 '289';'305';'321';'337';'353'; };
 %% -- PARAMETRIC
 % DIR_IN      = '/media/DATI/db-backup/MODIS/vrt';
-DIR_IN      = '/media/DATI/db-backup/MODIS/tif';
-YEARS       = 2001:2016;
-BAND        = 'NDVI';% which data to be extracted by original .hdf files
-FORMAT      = 'tif';% output format for end-product files {vrt,tif,hdf}
+%DIR_IN      = '/media/DATI/db-backup/MODIS/tif';
+DIR_IN      = '/media/DATI/db-backup/MODIS/hdf-it';
+YEARS       = 2001:2017;% 2014
+BAND        = 'NDVI';% {NDVI, VIQuality, }
+FORMAT      = 'hdf';% output format for end-product files {vrt,tif,hdf}
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};% considered only in case of hdf
 %% pre
 % e.g. NDVI_A2006033_MOD13Q1.006.vrt

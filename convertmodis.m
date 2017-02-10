@@ -6,8 +6,8 @@ PRODUCT     = 'MOD13Q1.006';
 SDOY        = 1;
 EDOY        = 366;
 %% -- PARAMETRIC
-YEARS       = 2001:2016;
-BAND        = 'NDVI';% which data to be extracted by original .hdf files
+YEARS       = 2004;%2001:2016;
+BAND        = 'VIQuality';% {NDVI, VIQuality, }
 REFSYST     = 'EPSG:4326';% target reference system to be applyed
 FORMAT      = 'GTiff';% output format for end-product files
 isSTACK     = false;% true:it creates a stack (via .vrt); false:one tif for each DOY

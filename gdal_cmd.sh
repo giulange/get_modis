@@ -11,4 +11,6 @@ gdal_merge.py -seperate NDVI_A2001001_MOD13Q1.006.tif NDVI_A2001017_MOD13Q1.006.
 # extract NDVI value in Ercolano from geotiff:
 gdallocationinfo -geoloc NDVI_A2004129_MOD13Q1.006.tif 14.349074 40.800515
 
+gdallocationinfo -geoloc -valonly /media/DATI/db-backup/MODIS/stack/NDVI_A2001_MOD13Q1.006.tif 14.459074 40.800515
+
 

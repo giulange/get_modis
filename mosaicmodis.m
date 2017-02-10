@@ -10,9 +10,9 @@ PRODUCT     = 'MOD13Q1.006';
 SDOY        = 1;
 EDOY        = 366;
 %% -- PARAMETRIC
-YEARS       = 2002:2016;
+YEARS       = 2016:2017;% {2004; 2002:2016; ...}
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};
-BAND        = 'NDVI';
+BAND        = 'NDVI';% { NDVI,VI Quality, ... }
 %% pre
 Fpoint      = strfind(PRODUCT,'.');
 LIST        = dir( fullfile(DIR_IN,[PRODUCT(1:Fpoint-1),'*',PRODUCT(Fpoint+1:end),'*.hdf']) );
@@ -26,14 +26,15 @@ gdalinfo_getBandName = @(y,doy,t) ...
                        ['gdalinfo ', fullfile(DIR_IN, ...
                          [PRODUCT(1:Fpoint-1),'.A',num2str(y),doy,'.',t,'.',...
                           PRODUCT(Fpoint+1:end),'*.hdf']),...
-                        ' | grep ',BAND,' | grep ''_NAME'''];
+                        ' | grep "',BAND,'" | grep ''_NAME'''];
 
 % Produce the mosaic:
 % gdalbuildvrt mosaik.vrt 'HDF4_EOS:EOS_GRID:"MOD13Q1.A2014225.h18v04.006.2015289162913.hdf":MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI' 'HDF4_EOS:EOS_GRID:"MOD13Q1.A2014225.h18v05.006.2015289162858.hdf":MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI'
 %gdalbuildvrt = @(y,doy) ['gdalbuildvrt ',fullfile(DIR_OUT,[BAND,'_A',num2str(y),doy,'.vrt'])];
+BD = BAND; BD(isspace( BAND ))=[];
 gdalbuildvrt_createMosaic = @(y,doy) ...
                     ['gdalbuildvrt ',fullfile(DIR_OUT,  ...
-                    	[BAND,'_A',num2str(y),doy,'_',PRODUCT,'.vrt']) ...
+                    	[BD,'_A',num2str(y),doy,'_',PRODUCT,'.vrt']) ...
                     ];
 %% batch mosaic
 % The script mosaics the tiles of the same day in one vrt file which can be

@@ -1,7 +1,36 @@
 % The modis package under MatLab was developed to manage Satellite data
 % coming from MODIS.
-% There are three scripts each with own parameters to be configured. In
-% order of execution there are:
+% 
+% The data (not only MODIS) are stored by USGS at:
+%   https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/
+%   https://lpdaac.usgs.gov/data_access/data_pool
+% 
+% "Vegetation Indices 16-Day L3 Global 250m" MODIS data are called:
+%       > MOD13Q1 Terra (=MOLT)
+%       > MYD13Q1 Aqua  (=MOLA)
+% See this link to retrieve Terra data:
+%   https://e4ftl01.cr.usgs.gov/MOLT/
+% 
+% To understand how to choose the requied "MODIS product name with
+% collection tag at the end", see these links:
+%   https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/
+%   https://ladsweb.modaps.eosdis.nasa.gov/about/purpose/MODIS-Land-Proc-Flow.png
+%   
+% A detail User's Guide for MOD13Q1.006 is at:
+%   https://lpdaac.usgs.gov/sites/default/files/public/product_documentation/mod13_user_guide.pdf
+%   http://www.ctahr.hawaii.edu/grem/mod13ug/sect0005.html
+%   https://modis.gsfc.nasa.gov/data/atbd/atbd_mod13.pdf
+% 
+% A detailed description of the MOD13Q1.006 product is at:
+%   https://lpdaac.usgs.gov/node/844
+% 
+% 250m/500m  16 days VI Product – HDF-EOS V2 MODIS VEGETATION INDICES HDF
+% File Specification
+%   https://ladsweb.nascom.nasa.gov/api/v1/filespec/collection=6&product=MOD13Q1
+% 
+% 
+% There are five scripts each with own parameters to be configured.
+% In order of execution there are:
 %   (1) downmodis.m   :: It is based on the get_modis.py script included in
 %                        the folder. It downloads hdf files and stores them
 %                        in a user defined path. The user can select tiles
@@ -35,6 +64,14 @@
 %               any
 %                        pars  ––> product, start/end DOY, years, tiles,
 %                                  band
+% 
+%   (4) stackcreatemodis.m:: It aggregates the geoTiff NDVI (23) maps of
+%                            the same year in the same stack (e.g.
+%                            NDVI_A2001_MOD13Q1.006.tif).
+% 
+%   (5) convertmodis.m:: It checks for missing data. Can be used to
+%                        understand whether to import new data from the
+%                        server or not.
 % 
 % The gdal package should be already installed on the computer, typically
 % at:
