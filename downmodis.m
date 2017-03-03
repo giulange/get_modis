@@ -11,8 +11,8 @@ SDOY        = 1;
 EDOY        = 366;
 USER        = 'giulange';
 PSWD        = 'XMa-q9t-pTt-dZC';
-%% -- PARRAMETRIC
-YEARS       = 2016:2017; %2003:2016;
+%% -- PARAMETRIC
+YEARS       = 2016; %2001:2017;
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};
 %% original command
 % !./get_modis.py -v -s MOLT -p MOD13Q1.006 -y 2004 -t h18v04 -o ~/Downloads/modis#2/ -b 1 -e 366

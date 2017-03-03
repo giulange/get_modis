@@ -24,11 +24,21 @@
 % A detailed description of the MOD13Q1.006 product is at:
 %   https://lpdaac.usgs.gov/node/844
 % 
+% A detailed description and help for interpretation of quality of VI
+% signals, see the README file at:
+%   /media/DATI/db-backup/MODIS/quality-example
+% in which all details are highlighted.
+% 
 % 250m/500m  16 days VI Product – HDF-EOS V2 MODIS VEGETATION INDICES HDF
 % File Specification
 %   https://ladsweb.nascom.nasa.gov/api/v1/filespec/collection=6&product=MOD13Q1
 % 
-% 
+% The program should be run under MatLab r2014a version.
+% The problem with last version (r2016b) may be in the folder:
+%   /usr/local/MATLAB/R2016b/sys/os/glnxa64/
+% in which the lib libstdc++.so.6 is different from the file:
+%   /usr/local/MATLAB/R2014a/sys/os/glnxa64/libstdc++.so.6
+%
 % There are five scripts each with own parameters to be configured.
 % In order of execution there are:
 %   (1) downmodis.m   :: It is based on the get_modis.py script included in
@@ -54,7 +64,11 @@
 %                        format as required) applying the required
 %                        reference system. The developer is planning to set
 %                        an option with which create yearly stacks for a
-%                        ROI.
+%                        ROI. It was planned to perform also the stack
+%                        creation, but the extraction of info from .vrt
+%                        does not work and the gdal_merge.py does not work
+%                        on gpu-pedology. This way I created the
+%                        stackcreatemodis script to deal with this task.
 %               case#1
 %                        fnc() ––> gdalbuildvrt=@gdalbuildvrt()
 %                                  gdal_translate=@gdal_translate()
@@ -68,8 +82,17 @@
 %   (4) stackcreatemodis.m:: It aggregates the geoTiff NDVI (23) maps of
 %                            the same year in the same stack (e.g.
 %                            NDVI_A2001_MOD13Q1.006.tif).
+%                            This function is dedicated to the creation of
+%                            stacks using the gdal_merge.py function. The
+%                            issue at now is that it does not work on
+%                            gpu-pedology, hence a list of commands is
+%                            saved to run the process on the ftp-pedology.
+%                            In a future version I have to delete the
+%                            creation of stack from convertmodis and
+%                            specilize stackcreatemodis to perform this
+%                            operation.
 % 
-%   (5) convertmodis.m:: It checks for missing data. Can be used to
+%   (5) countmodis.m::   It checks for missing data. Can be used to
 %                        understand whether to import new data from the
 %                        server or not.
 % 
@@ -92,4 +115,15 @@ giuliano@ftp-pedology-unina:/media/FTP/db-backup/MODIS/tif
 
 % to check the stacks created, you can:
 ls *A20??_MOD* -lah
+
+% to update giulange project with the original project, use the following:
+git remote -v
+git remote add upstream https://github.com/jgomezdans/get_modis.git % only once
+git remote -v
+git fetch upstream
+git checkout master
+git merge upstream/master
+
+% example of using original project function:
+~/git/get_modis/./get_modis.py -u giulange -P XMa-q9t-pTt-dZC -v -s MOLT -p MOD13Q1.006 -y 2016 -t h18v04 -o /media/DATI/db-backup/MODIS/hdf-it/ -b 100 -e 120
 

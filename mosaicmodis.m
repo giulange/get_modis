@@ -10,9 +10,13 @@ PRODUCT     = 'MOD13Q1.006';
 SDOY        = 1;
 EDOY        = 366;
 %% -- PARAMETRIC
-YEARS       = 2016:2017;% {2004; 2002:2016; ...}
+YEARS       = 2001:2017;% {2004; 2001:2017; ...}
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};
-BAND        = 'NDVI';% { NDVI,VI Quality, ... }
+BAND        = 'VI Quality';% 
+%                 { NDVI,EVI, VI Quality, red reflectance, NIR reflectance, 
+%                   blue reflectance, MIR reflectance, view zenith
+%                   angle, sun zenith angle, relative azimuth angle,
+%                   composite day of the year, pixel reliability }
 %% pre
 Fpoint      = strfind(PRODUCT,'.');
 LIST        = dir( fullfile(DIR_IN,[PRODUCT(1:Fpoint-1),'*',PRODUCT(Fpoint+1:end),'*.hdf']) );
@@ -104,7 +108,7 @@ for y=1:numel(YEARS)
             fprintf('\tDOY=%s skipped!\n',uaDays{d})
             continue
         end    
-        fprintf('\tDOY=%s included!\n',uaDays{d})
+        fprintf('\tIncluding DOY=%s ...\n',uaDays{d})
         
         Ftiles = strfind(aDays,uaDays{d});
         
@@ -151,5 +155,3 @@ for y=1:numel(YEARS)
         fprintf('%s\n',reply)
     end
 end
-
-

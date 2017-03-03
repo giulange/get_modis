@@ -2,16 +2,24 @@
 %% -- NON-PARAMETRIC
 DIR_IN      = '/media/DATI/db-backup/MODIS/vrt';
 DIR_OUT     = '/media/DATI/db-backup/MODIS/tif';
+DIR_STACK   = '/media/DATI/db-backup/MODIS/stack';
 PRODUCT     = 'MOD13Q1.006';
 SDOY        = 1;
 EDOY        = 366;
 %% -- PARAMETRIC
-YEARS       = 2004;%2001:2016;
-BAND        = 'VIQuality';% {NDVI, VIQuality, }
+YEARS       = 2001:2017;% { 2004, 2001:2017 }
+BAND        = 'VIQuality';% {NDVI, VIQuality, pixelreliability }
 REFSYST     = 'EPSG:4326';% target reference system to be applyed
 FORMAT      = 'GTiff';% output format for end-product files
-isSTACK     = false;% true:it creates a stack (via .vrt); false:one tif for each DOY
+viaVRT      = false;% true:it creates a stack (via .vrt); false:one tif for each DOY, then create stack!
+OVERWRITE   = false;% false:tif files already existent are skipped; true:tif are overwritten
+createStack = false;% switch to skip stack creation (use the stackcreatemodis function instead)
 %% pre
+if viaVRT
+    error(['The creation of stacks via .vrt does not work!\n',...
+           'Run the other procedure using viaVRT=false.\n',...
+           'After, run stackcreatemodis which creates a script to run on ftp-pedology as root.'])
+end
 Fpoint      = strfind(PRODUCT,'.');
 LIST        = dir( fullfile(DIR_IN, [BAND,'_A*_',PRODUCT,'.vrt']) );
 LIST        = {LIST.name}';
@@ -33,7 +41,7 @@ gdalbuildvrt = @(vrt) ['gdalbuildvrt -separate -input_file_list ', ...
 gdal_translate = @(vrt,tif) ['gdal_translate -of ',FORMAT, ...
                              ' -co "COMPRESS=LZW" -co "TILED=YES" ', ...
                              ' -a_srs ',REFSYST,' ',...
-                             fullfile(DIR_IN,vrt),' ',fullfile(DIR_OUT,tif)];
+                             fullfile(DIR_IN,vrt),' ',fullfile(DIR_STACK,tif)];
 
 
 % *** create one file per DOY ***
@@ -54,9 +62,9 @@ gdalwarp = @(vrt,tif) ['gdalwarp -of ',FORMAT, ...
                        fullfile(DIR_IN,vrt),' ',fullfile(DIR_OUT,tif)];
 
 % |04| build the stack after, mounting the GTiff together
-% gdal_merge.py -seperate NDVI_A2001001_MOD13Q1.006.tif NDVI_A2001017_MOD13Q1.006.tif NDVI_A2001033_MOD13Q1.006.tif -o stack.tif
-% gdal_merge.py -seperate NDVI_A2001001_MOD13Q1.006.tif NDVI_A2001017_MOD13Q1.006.tif NDVI_A2001033_MOD13Q1.006.tif NDVI_A2001049_MOD13Q1.006.tif NDVI_A2001065_MOD13Q1.006.tif NDVI_A2001081_MOD13Q1.006.tif NDVI_A2001097_MOD13Q1.006.tif NDVI_A2001113_MOD13Q1.006.tif NDVI_A2001129_MOD13Q1.006.tif NDVI_A2001145_MOD13Q1.006.tif NDVI_A2001161_MOD13Q1.006.tif NDVI_A2001177_MOD13Q1.006.tif NDVI_A2001193_MOD13Q1.006.tif NDVI_A2001209_MOD13Q1.006.tif NDVI_A2001225_MOD13Q1.006.tif NDVI_A2001241_MOD13Q1.006.tif NDVI_A2001257_MOD13Q1.006.tif NDVI_A2001273_MOD13Q1.006.tif NDVI_A2001289_MOD13Q1.006.tif NDVI_A2001305_MOD13Q1.006.tif NDVI_A2001321_MOD13Q1.006.tif NDVI_A2001337_MOD13Q1.006.tif NDVI_A2001353_MOD13Q1.006.tif -o NDVI_A2001-MOD13Q1.006.tif
-gdal_merge = @(iTifs,oTif) ['gdal_merge.py -seperate ',iTifs,' ',fullfile(DIR_OUT,oTif)];
+% gdal_merge.py -separate NDVI_A2001001_MOD13Q1.006.tif NDVI_A2001017_MOD13Q1.006.tif NDVI_A2001033_MOD13Q1.006.tif -o stack.tif
+% gdal_merge.py -separate NDVI_A2001001_MOD13Q1.006.tif NDVI_A2001017_MOD13Q1.006.tif NDVI_A2001033_MOD13Q1.006.tif NDVI_A2001049_MOD13Q1.006.tif NDVI_A2001065_MOD13Q1.006.tif NDVI_A2001081_MOD13Q1.006.tif NDVI_A2001097_MOD13Q1.006.tif NDVI_A2001113_MOD13Q1.006.tif NDVI_A2001129_MOD13Q1.006.tif NDVI_A2001145_MOD13Q1.006.tif NDVI_A2001161_MOD13Q1.006.tif NDVI_A2001177_MOD13Q1.006.tif NDVI_A2001193_MOD13Q1.006.tif NDVI_A2001209_MOD13Q1.006.tif NDVI_A2001225_MOD13Q1.006.tif NDVI_A2001241_MOD13Q1.006.tif NDVI_A2001257_MOD13Q1.006.tif NDVI_A2001273_MOD13Q1.006.tif NDVI_A2001289_MOD13Q1.006.tif NDVI_A2001305_MOD13Q1.006.tif NDVI_A2001321_MOD13Q1.006.tif NDVI_A2001337_MOD13Q1.006.tif NDVI_A2001353_MOD13Q1.006.tif -o NDVI_A2001-MOD13Q1.006.tif
+gdal_merge = @(iTifs,oTif) ['gdal_merge.py -separate -o ',fullfile(DIR_STACK,oTif),iTifs];
 
 % *** old-one, used as further reference ***
 % gdalwarp -of GTiff -t_srs "EPSG:4326" mosaik.vrt mosaik.tif
@@ -109,71 +117,101 @@ for y=1:numel(YEARS)
     end
     %if isempty(uaDays{1}), uaDays(1)=[]; end
 
-    if isSTACK
+    if viaVRT
         % open file
         fid = fopen(FIL_LIST,'w');
     end
     % loop on all available days in folder and skip those days outside the
     % range SDOY:EDOY
+    iTifs = '';
     for d=1:numel(uaDays)
+        FILdoy = [BAND,'_A',num2str(YEARS(y)),uaDays{d},'_',PRODUCT];
+        vrt = [FILdoy,'.vrt'];
+        tif = [FILdoy,'.tif'];
+        iTifs = [iTifs,' ',fullfile(DIR_OUT,tif)]; %#ok<AGROW>
         % if available day is outside defined range, skip
         if str2double(uaDays{d})<SDOY || str2double(uaDays{d})>EDOY ...
            || isempty(uaDays{d})
             fprintf('\tDOY=%s skipped! [%s]\n',uaDays{d},yLIST{d})
             continue
         end
-        fprintf('\tDOY=%s included! [%s]\n',uaDays{d},yLIST{d})
         
-        iTifs = '';
-        % isSTACK=false ==> one tif for each DOY will be delivered:
-        if ~isSTACK
+        fprintf('\tDOY=%s found!  Including... [%s]\n',uaDays{d},yLIST{d})
+        % viaVRT=false ==> one tif for each DOY will be delivered:
+        if ~viaVRT
             % |03| gdalwarp: convert single images from .vrt to .tif
             %      take single NDVI_A2001001_MOD13Q1.006.vrt
-            FILdoy = [BAND,'_A',num2str(YEARS(y)),uaDays{d},'_',PRODUCT];
-            vrt = [FILdoy,'.vrt'];
-            tif = [FILdoy,'.tif'];
-            iTifs = [iTifs,' ',tif];
-            fprintf('Running...\n\t%s\n',gdalwarp( vrt,tif ))
-            [~,reply] = system( gdalwarp( vrt,tif ) );
-            fprintf('%s\n',reply)
+            %      skip or overwrite?
+            EXISTS=false;
+            if exist(fullfile(DIR_OUT,tif),'file'), EXISTS=true; end
+            if OVERWRITE || ~EXISTS
+                fprintf('\t\tRunning...\n\t\t\t%s\n',gdalwarp( vrt,tif ))
+                [~,reply] = system( gdalwarp( vrt,tif ) );
+                fprintf('%s\n',reply)
+            elseif EXISTS && ~OVERWRITE
+                fprintf('\t\tSkipped because already EXISTS!\n')
+            end
         else
             % write in file the list of images to be aggregated in the
             % stack:
             fprintf(fid,'%s\n',fullfile(DIR_IN,yLIST{d}));
-        end
-        
+        end 
     end
         
-    if isSTACK
+    if viaVRT
         fclose(fid);
         clear fid;
 
         % |01| gdalbuildvrt: composition of yearly stack in .vrt
+        fprintf('\n\t%s\n','Yearly stack creation:')
         % 'NDVI_A2001_MOD13Q1.006.vrt'
         vrt = [BAND,'_A',num2str(YEARS(y)),'-',PRODUCT,'.vrt'];% I need the "-" to distinguish the stack filename from single image one!
-        fprintf('Running...\n\t%s\n', gdalbuildvrt( vrt ) )
-        [~,reply] = system( gdalbuildvrt( vrt ) );
-        fprintf('%s\n',reply);
-
+        EXISTS=false;
+        if exist(fullfile(DIR_IN,vrt),'file'), EXISTS=true; end
+        if OVERWRITE || ~EXISTS
+            fprintf('\t\tRunning...\t%s\n', gdalbuildvrt( vrt ) )
+            [~,reply] = system( gdalbuildvrt( vrt ) );
+            fprintf('\t\t\t%s\n',reply);
+        elseif EXISTS && ~OVERWRITE
+            fprintf('\t\tSkipped because already EXISTS!  [%s]\n',fullfile(DIR_IN,vrt))
+        end
+        
         % |02| gdal_translate: convert yearly stack from .vrt to .tif
-        tif = [BAND,'_A',num2str(YEARS(y)),'_',PRODUCT,'.tif'];
-        fprintf('Running...\n\t%s\n',gdal_translate( vrt,tif ))
-        [~,reply] = system( gdal_translate( vrt,tif ) );
-        fprintf('%s\n',reply)
-
+        if createStack
+            tif = [BAND,'_A',num2str(YEARS(y)),'_',PRODUCT,'.tif'];
+            EXISTS=false;
+            if exist(fullfile(DIR_STACK,tif),'file'), EXISTS=true; end
+            if OVERWRITE || ~EXISTS
+                fprintf('\t\tRunning...\t%s\n',gdal_translate( vrt,tif ))
+                [~,reply] = system( gdal_translate( vrt,tif ) );
+                fprintf('\t\t\t%s\n',reply)
+            elseif EXISTS && ~OVERWRITE
+                fprintf('\t\tSkipped because already EXISTS!  [%s]\n',fullfile(DIR_STACK,tif))
+            end
+        end
+        
         % delete file list .txt:
         delete(FIL_LIST)
     else
-        % e.g. 'NDVI_A2001-MOD13Q1.006.tif'
         % |04| create a yearly stack of images
-        fprintf('%s\n','The yearly stack creation is de-activated because gdal_merge.py currently does not work!')
-        if 0% I need to install a working copy of gdal_merge.py before to activate this block
+        if createStack
+            % e.g. 'NDVI_A2001-MOD13Q1.006.tif'
+            %fprintf('\t%s\n','The yearly stack creation is de-activated because gdal_merge.py currently does not work!')
+            fprintf('\t%s\n','Yearly stack creation:')
             oTif = [BAND,'_A',num2str(YEARS(y)),'_',PRODUCT,'.tif'];
-            fprintf( 'Running...\n\t%s\n', gdal_merge(iTifs,oTif) )
-            [~,reply] = system( gdal_merge(iTifs,oTif) );
-            fprintf('%s\n',reply)
+            EXISTS=false;
+            if exist(fullfile(DIR_STACK,oTif),'file'), EXISTS=true; end
+            if OVERWRITE || ~EXISTS
+            %if 0% I need to install a working copy of gdal_merge.py before to activate this block
+                fprintf( '\t\tRunning...\t%s\n', gdal_merge(iTifs,oTif) )
+                [~,reply] = system( gdal_merge(iTifs,oTif) );
+                fprintf('\t\t\t%s\n',reply)
+                fprintf( 'On error running "gdal_merge.py", run the following command on ftp-pedology as root:\n\t%s\n\n', ...
+                         strrep(gdal_merge(iTifs,oTif),'DATI','FTP') )
+            elseif EXISTS && ~OVERWRITE
+                fprintf('\t\tSkipped because already EXISTS!  [%s]\n',fullfile(DIR_STACK,oTif))
+            end
         end
     end
-    
 end
 

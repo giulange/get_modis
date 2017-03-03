@@ -1,24 +1,29 @@
+%% This script saves the commands that must be run on ftp-pedology
+% In a future version I have to transfer the creation of stacks from
+% convertmodis to stackcreatemodis using both gdal_translate and
+% gdal_merge.py.
 %% PARs
 %% -- NON-PARAMETRIC
+DIR_IN      = '/media/DATI/db-backup/MODIS/tif';
+DIR_OUT     = '/media/DATI/db-backup/MODIS/stack';
 PRODUCT     = 'MOD13Q1.006';
 DOY_LIST    = { '001';'017';'033';'049';'065';'081';'097';'113';'129';...
                 '145';'161';'177';'193';'209';'225';'241';'257';'273';...
                 '289';'305';'321';'337';'353'; };
 %% -- PARAMETRIC
-DIR_IN      = '/media/DATI/db-backup/MODIS/tif';
-DIR_OUT     = '/media/DATI/db-backup/MODIS/stack';
-YEARS       = 2004;%2001:2016;
-BAND        = 'VIQuality';% {NDVI,VIQuality}
+YEARS       = 2001:2017; % { 2004; 2001:2017 }
+BAND        = 'VIQuality';% { NDVI; VIQuality; pixelreliability; ... }
 iFORMAT     = 'tif';% input  format for end-product files
 oFORMAT     = 'tif';% output format for end-product files
+OVERWRITE   = false;% false:tif files already existent are skipped; true:tif are overwritten
 %% pre
 Fpoint      = strfind(PRODUCT,'.');
 LIST        = dir( fullfile(DIR_IN, [BAND,'_A*_',PRODUCT,'.',iFORMAT]) );
 LIST        = {LIST.name}';
 % typeOf: 'NDVI_A2001001_MOD13Q1.006.vrt'
 
-curr_dir = pwd;
-cd( DIR_IN )% execute gdal_merge there to avoid 23 times the path 
+% curr_dir = pwd;
+% cd( DIR_IN )% execute gdal_merge there to avoid 23 times the path 
 %% Original commands
 % |01| build the stack, mounting the GTiff together
 % gdal_merge.py -seperate NDVI_A2001001_MOD13Q1.006.tif NDVI_A2001017_MOD13Q1.006.tif NDVI_A2001033_MOD13Q1.006.tif -o stack.tif
@@ -115,7 +120,7 @@ for y=1:numel(YEARS)
         %      take single NDVI_A2001001_MOD13Q1.006.vrt
         FILdoy = [BAND,'_A',num2str(YEARS(y)),DOY_LIST{d},'_',PRODUCT];
         tif = [FILdoy,'.tif'];
-        iTifs = [iTifs,' ',tif];
+        iTifs = [iTifs,' ',fullfile(DIR_IN,tif)]; %#ok<AGROW>
 %         fprintf('%1s','√')
         fprintf('%5s','*')
     end
@@ -126,7 +131,8 @@ for y=1:numel(YEARS)
         oTif = [BAND,'_A',num2str(YEARS(y)),'_',PRODUCT,'.',oFORMAT];
         fprintf( '%5s', '*' )
         [~,reply] = system( gdal_merge(iTifs,oTif) );
-        CMD{y} = gdal_merge(iTifs,oTif);
+%         CMD{y} = gdal_merge(iTifs,oTif);
+        CMD{y} = strrep( gdal_merge(iTifs,oTif),'DATI','FTP');
         isFine = ~isempty(strfind(reply,'100')) && ~isempty(strfind(reply,'done'));
         fprintf('%s=%d\n','good',isFine)
     else
@@ -134,19 +140,23 @@ for y=1:numel(YEARS)
     end
     fprintf('\n')
 end
-%% temporary print in file, while gdal_merge.py does not work
+%% print in file, while gdal_merge.py does not work on gou-pedology!
 
-CMD_tmp = strrep(CMD,'DATI','FTP');
-
-fid = fopen( fullfile(DIR_IN,'batch_gdalmerge') ,'w');
+fid = fopen( fullfile(DIR_OUT,'batch_gdalmerge') ,'w');
 fprintf(fid,'#!/bin/bash\n');
-for ii=1:numel(CMD_tmp)
-    if ~isempty( CMD_tmp{ii} )
-        fprintf(fid,'%s\n',CMD_tmp{ii});
+for ii=1:numel(CMD)
+    if ~isempty( CMD{ii} )
+        % ECHO:
+        fprintf(fid,'echo %s\n',CMD{ii});
+        % COMMAND:
+        fprintf(fid,'%s\n',CMD{ii});
     end
 end
 fclose(fid);
 clear fid
-eval( ['!chmod +x ',fullfile(DIR_IN,'batch_gdalmerge')] )
+eval( ['!chmod +x ',fullfile(DIR_OUT,'batch_gdalmerge')] )
+warning('Run the following script from ftp-pedology as root:\n%s',...
+        strrep( fullfile(DIR_OUT,'batch_gdalmerge'),'DATI','FTP' )...
+       )
 %% go back to starting path
-cd( curr_dir )
+% cd( curr_dir )
