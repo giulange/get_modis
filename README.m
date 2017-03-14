@@ -1,6 +1,14 @@
 % The modis package under MatLab was developed to manage Satellite data
 % coming from MODIS.
 % 
+% General overview on MODIS data:
+%   http://sugar.coas.oregonstate.edu/ORSOO/MODIS/workshop/tutorials/MODIStutorials.pdf
+% 
+% Reading .HDF files from within MatLab:
+%   http://vgl-ait.org/cvwiki/doku.php?id=matlab:tutorial:modis_dataset_manipulation_in_matlab
+%   http://hdfeos.org/zoo/LAADS/MOD08_D3_Cloud_Fraction_Liquid.m
+%   https://it.mathworks.com/matlabcentral/fileexchange/2611-earth-observing-system-data-visualization/content/eos_example_1.m
+% 
 % The data (not only MODIS) are stored by USGS at:
 %   https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/
 %   https://lpdaac.usgs.gov/data_access/data_pool
@@ -33,6 +41,12 @@
 % File Specification
 %   https://ladsweb.nascom.nasa.gov/api/v1/filespec/collection=6&product=MOD13Q1
 % 
+% MatLab tutorial on plot NDVI image:
+%   https://www.youtube.com/watch?v=nuUwXx_aO_c
+% 
+% To download using urlwrite:
+%   http://it.mathworks.com/matlabcentral/fileexchange/47329-measures/content/measures/measures_data.m
+% 
 % The program should be run under MatLab r2014a version.
 % The problem with last version (r2016b) may be in the folder:
 %   /usr/local/MATLAB/R2016b/sys/os/glnxa64/
@@ -48,6 +62,10 @@
 %                        fnc() ––> get_modis.py
 %                        pars  ––> product, start/end DOY, MODIS platform,
 %                                  years, tiles
+%                        See these alternative methods to download MODIS data:
+%                           > cURL / wget (https://nsidc.org/support/faq/what-options-are-available-bulk-downloading-data-https-earthdata-login-enabled)
+%                           > pyMODIS (http://www.pymodis.org/)
+%                           > on-the-fly from-scratch to-be-converted script (http://www.gisremotesensing.com/2010/06/getting-modis-image-automatically-from.html)
 % 
 %   (2) mosaicmodis.m :: It extracts from hdf files the required band (e.g.
 %                        NDVI or EVI) and stitches together the tiles of

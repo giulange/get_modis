@@ -1,0 +1,31 @@
+# Follow this instructions to get MODIS data in automatic:
+https://nsidc.org/support/faq/what-options-are-available-bulk-downloading-data-https-earthdata-login-enabled
+
+1. Configure your username and password for authentication using a .netrc file
+>cd ~
+>touch .netrc
+>echo "machine urs.earthdata.nasa.gov login <uid> password <password>" >> .netrc
+>chmod 0600 .netrc
+where <uid> is your URS username and <password> is your URS password. Do not include the brackets <>.
+
+2. Create a cookie file. This will be used to persist sessions across individual cURL/WGET calls, making it more efficient.
+>cd ~
+>touch .urs_cookies
+
+3. Use a WGET command to download your data. Example WGET command:
+
+>wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --keep-session-cookies --no-check-certificate --auth-no-challenge=on -r --reject "index.html*" -np -e robots=off <insert complete HTTPS data URL>
+
+As composed above, the WGET request will download files from the specified directory to a directory on your machine. The directory on your machine will have the title of the HTTPS host. For NSIDC, this will either be "n5eil01u.ecs.nsidc.org" or “daacdata.apps.nsidc.org”.
+
+Using the WGET flags -nd (or --no-directories), -nH (or --no-host-directories), or --cut-dirs=number (where the number is the number of directories to cut, but doesn't include the host directory name - you'd need to include -nH to remove that still), you can modify the directory name and hierarchy, where the files are written.
+
+I tried this command and worked:
+wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --keep-session-cookies --no-check-certificate --auth-no-challenge=on -r --reject "index.html*" -np -e robots=off  https://n5eil01u.ecs.nsidc.org/MOSA/MYD10A1.006/2002.07.04/MYD10A1.A2002185.h08v07.006.2016152140117.hdf
+
+
+# how to get all Snow cover data from the portal
+1.\ download all the structure of the database (i.e. all dates and full names of .hdf files)
+wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --keep-session-cookies --no-check-certificate --auth-no-challenge=on -r -np -e robots=off  https://n5eil01u.ecs.nsidc.org/MOSA/MYD10A1.006
+
+2.\ automatise the download for snow cover in Italy across the whole available time period

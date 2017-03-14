@@ -110,6 +110,8 @@ line([OnP,n+1],[OnV,OnV],'LineStyle',':','Color','y')
 line([MaxP,n+1],[MaxV,MaxV],'LineStyle',':','Color','y')
 line([EndP,n+1],[EndV,EndV],'LineStyle',':','Color','y')
 hold off
+xlabel('\fontsize{12}\color{black}\bf Time [16-days]')
+ylabel('\fontsize{12}\color{magenta}\bf NDVI - MODIS')
 
 if isShifted
     OnP = OnP-(n-Fmn+1); if OnP<1, OnP=n+OnP; end

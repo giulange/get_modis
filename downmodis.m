@@ -4,15 +4,15 @@
 
 %% PARs
 %% -- NON-PARAMETRIC
-PLATFORM    = 'MOLT'; % type: MOLA, MOLT or MOTA
-PRODUCT     = 'MOD13Q1.006';
+PLATFORM    = 'MOLT'; % type: MOLA(MODIS:Aqua), MOLT(MODIS:Terra) or MOTA(MODIS:Terra&Aqua)
+PRODUCT     = 'MOD13Q1.006';% { 'MOD13Q1.006'; '' }
 DIR_OUT     = '/media/DATI/db-backup/MODIS/hdf-it/';
 SDOY        = 1;
-EDOY        = 366;
+EDOY        = 3;
 USER        = 'giulange';
 PSWD        = 'XMa-q9t-pTt-dZC';
 %% -- PARAMETRIC
-YEARS       = 2016; %2001:2017;
+YEARS       = 2001; %2001:2017;
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};
 %% original command
 % !./get_modis.py -v -s MOLT -p MOD13Q1.006 -y 2004 -t h18v04 -o ~/Downloads/modis#2/ -b 1 -e 366
