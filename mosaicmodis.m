@@ -145,9 +145,11 @@ for y=1:numel(YEARS)
         for t=1:numel(TILES)
             % |01| gdalinfo MOD13Q1.A2014225.h18v04.006.2015289162913.hdf| grep NDVI | grep '_NAME'
             fprintf('Running...\n\t%s\n', gdalinfo_getBandName(YEARS(y),uaDays{d},TILES{t}) )
-            [~,reply] = system( gdalinfo_getBandName(YEARS(y),uaDays{d},TILES{t}) )
-            a = readtext(reply, ':', '', '', 'textsource');
-          ;
+            [~,reply] = system( gdalinfo_getBandName(YEARS(y),uaDays{d},TILES{t}) );
+            % check if more bands have the same base name (for instance this happens for MYD10A1.006 products
+            % where more bands show the NDSI_Snow_Cover band name!):
+            chk  = readtext(reply, ':', '', '', 'textsource');
+            Fchk = strfind(chk,TILES{t});
             fprintf('%s\n',reply)
             % remove trailing blanks from end of string
             reply=deblank(reply);
@@ -157,7 +159,7 @@ for y=1:numel(YEARS)
             
             % |02| gdalbuildvrt mosaik.vrt ...
             % mosaic with gdal:
-            str = [str,' ''',reply(Feq+1:end),''''];
+            str = [str,' ''',reply(Feq+1:end),'''']; %#ok<AGROW>
         end
         fprintf('Running...\n\t%s\n', str )
         [a,reply] = system( str );
