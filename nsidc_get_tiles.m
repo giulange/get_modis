@@ -49,7 +49,7 @@ PORTAL      = 'https://n5eil01u.ecs.nsidc.org';
 basic_par   = '--load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --keep-session-cookies --no-check-certificate --auth-no-challenge=on';
 DIR_TMP     = '/home/giuliano/git/get_modis/tmpdir';
 PLATFORM    = 'MOSA';% { MOSA, MOST, ...  }
-PRODUCT     = 'MYD10A1.006';
+PRODUCT     = 'MYD10A1.006';% { MYD10A1.006 }
 Sdate       = '2002.07.04';% yyyy.mm.dd
 Edate       = '2017.01.01';% yyyy.mm.dd
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};

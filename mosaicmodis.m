@@ -4,19 +4,24 @@
 
 %% PARs
 %% -- NON-PARAMETRIC
-DIR_IN      = '/media/DATI/db-backup/MODIS/hdf-it';
 DIR_OUT     = '/media/DATI/db-backup/MODIS/vrt';
-PRODUCT     = 'MOD13Q1.006';
-SDOY        = 1;
-EDOY        = 366;
 %% -- PARAMETRIC
-YEARS       = 2001:2017;% {2004; 2001:2017; ...}
+DIR_IN      = '/media/DATI/db-backup/MODIS/hdf-it/snowcover';
+PRODUCT     = 'MYD10A1.006';% { MOD13Q1.006 , MYD10A1.006 ,   }
+YEARS       = 2003;% {2004; 2001:2017; ...}
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};
-BAND        = 'VI Quality';% 
+BAND        = 'NDSI_Snow_Cover';%
+%        ...:: MOD13Q1.006 ::...
 %                 { NDVI,EVI, VI Quality, red reflectance, NIR reflectance, 
 %                   blue reflectance, MIR reflectance, view zenith
 %                   angle, sun zenith angle, relative azimuth angle,
 %                   composite day of the year, pixel reliability }
+%        ...:: MYD10A1.006 ::...
+%                 { NDSI_Snow_Cover, NDSI_Snow_Cover_Basic_QA,
+%                   NDSI_Snow_Cover_Algorithm_Flags_QA, NDSI,
+%                   Snow_Albedo_Daily_Tile, orbit_pnt, granule_pnt }
+SDOY        = 1;
+EDOY        = 2;% { 2, 366 }
 %% pre
 Fpoint      = strfind(PRODUCT,'.');
 LIST        = dir( fullfile(DIR_IN,[PRODUCT(1:Fpoint-1),'*',PRODUCT(Fpoint+1:end),'*.hdf']) );
@@ -32,7 +37,7 @@ gdalinfo_getBandName = @(y,doy,t) ...
                           PRODUCT(Fpoint+1:end),'*.hdf']),...
                         ' | grep "',BAND,'" | grep ''_NAME'''];
 
-% Produce the mosaic:
+% Produce a mosaic of this kind:
 % gdalbuildvrt mosaik.vrt 'HDF4_EOS:EOS_GRID:"MOD13Q1.A2014225.h18v04.006.2015289162913.hdf":MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI' 'HDF4_EOS:EOS_GRID:"MOD13Q1.A2014225.h18v05.006.2015289162858.hdf":MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI'
 %gdalbuildvrt = @(y,doy) ['gdalbuildvrt ',fullfile(DIR_OUT,[BAND,'_A',num2str(y),doy,'.vrt'])];
 BD = BAND; BD(isspace( BAND ))=[];
@@ -40,6 +45,8 @@ gdalbuildvrt_createMosaic = @(y,doy) ...
                     ['gdalbuildvrt ',fullfile(DIR_OUT,  ...
                     	[BD,'_A',num2str(y),doy,'_',PRODUCT,'.vrt']) ...
                     ];
+% The gdalbuildvrt_createMosaic function handle is hereafter used to cat
+% every tile belonging to the same day!
 %% batch mosaic
 % The script mosaics the tiles of the same day in one vrt file which can be
 % easily managed with gdalwarp to apply custom reference system and file
@@ -138,7 +145,9 @@ for y=1:numel(YEARS)
         for t=1:numel(TILES)
             % |01| gdalinfo MOD13Q1.A2014225.h18v04.006.2015289162913.hdf| grep NDVI | grep '_NAME'
             fprintf('Running...\n\t%s\n', gdalinfo_getBandName(YEARS(y),uaDays{d},TILES{t}) )
-            [~,reply] = system( gdalinfo_getBandName(YEARS(y),uaDays{d},TILES{t}) );
+            [~,reply] = system( gdalinfo_getBandName(YEARS(y),uaDays{d},TILES{t}) )
+            a = readtext(reply, ':', '', '', 'textsource');
+          ;
             fprintf('%s\n',reply)
             % remove trailing blanks from end of string
             reply=deblank(reply);
