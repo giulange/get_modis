@@ -1,7 +1,6 @@
 %% DEVELOP THE CODE TO DOWNLOAD SNOW COVER DATA FROM AUTHENTICATED PORTAL
 % For few details see the README.wget file.
-
-% wget parameters:
+%% wget parameters:
 %   -p          This option causes Wget to download all the files that are
 %               necessary to properly display a given HTML page.  This
 %               includes such things as inlined images, sounds, and
@@ -44,10 +43,11 @@
 %   -O file     The documents will not be written to the appropriate files,
 %               but all will be concatenated together and written to file.
 %               extended version is --output-document=file
-
+%% PARs
+%% -- FIXED
 PORTAL      = 'https://n5eil01u.ecs.nsidc.org';
-basic_par   = '--load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --keep-session-cookies --no-check-certificate --auth-no-challenge=on';
-DIR_TMP     = '/home/giuliano/git/get_modis/tmpdir';
+basic_pars  = '--load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --keep-session-cookies --no-check-certificate --auth-no-challenge=on';
+%% -- PARAMETRIC
 PLATFORM    = 'MOSA';% { MOSA, MOST, ...  }
 PRODUCT     = 'MYD10A1.006';% { MYD10A1.006 }
 Sdate       = '2002.07.04';% yyyy.mm.dd
@@ -57,40 +57,35 @@ DIR_OUT     = '/media/DATI/db-backup/MODIS/hdf-it/snowcover';
 FIL_FORMAT  = '.hdf';
 WITH_XML    = false;
 OVERWRITE   = false;
-
-%% PARs
-basic_pars  = '--load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --keep-session-cookies --no-check-certificate --auth-no-challenge=on';
-%% fnc handles
+%% ORIGINAL COMMANDS (fnc handles to...)
 wget_tile   = @(link,oDir) ['wget ',basic_pars,' -r -nd --reject "index.html*" -np -e robots=off -P ',oDir, ' ',link];
 % rm          = @(dir_del) ['rm -vrf ',dir_del];
-
 %% RETRIEVE list of SATELLITES:
 satlist     = nsidc_get_satlist;
 %% RETRIEVE list of PRODUCTS:
 prodlist    = nsidc_get_prodlist( satlist{3} );
 %% RETRIEVE list of DATES:
 dateslist   = nsidc_get_dateslist( prodlist{4}, PLATFORM );
-
 %% main
-SD = datenum( Sdate, 'yyyy.mm.dd' );
-ED = datenum( Edate, 'yyyy.mm.dd' );
-AD = datenum( dateslist, 'yyyy.mm.dd' );
-fSD = find(AD==SD);
-fED = find(AD==ED);
+SD          = datenum( Sdate, 'yyyy.mm.dd' );
+ED          = datenum( Edate, 'yyyy.mm.dd' );
+AD          = datenum( dateslist, 'yyyy.mm.dd' );
+fSD         = find(AD==SD);
+fED         = find(AD==ED);
 if numel(fSD)>1 || numel(fED)>1
     error('Duplicated dates for platform:%s and product:%s',PLATFORM,PRODUCT)
 end
 
 for tt = fSD:fED
     % RETRIEVE list of TILES:
-    tileslist   = nsidc_get_tileslist( dateslist{tt}, prodlist{4}, PLATFORM );
+    tileslist = nsidc_get_tileslist( dateslist{tt}, prodlist{4}, PLATFORM );
     
     % DOWNLOAD the required TILES:
-    F1 = strfind(tileslist,FIL_FORMAT);
-    D = false(size(tileslist));
+    F1      = strfind(tileslist,FIL_FORMAT);
+    D       = false(size(tileslist));
     for jj = 1:numel(TILES)
-        F2 = strfind(tileslist,TILES{jj});
-        F3 = strfind(tileslist,'.xml');
+        F2  = strfind(tileslist,TILES{jj});
+        F3  = strfind(tileslist,'.xml');
 
         %intersect(F1,F2);
         for ii = 1:numel(tileslist)
@@ -102,9 +97,9 @@ for tt = fSD:fED
             D(ii) = true;
         end
     end
-    D = tileslist(D);
+    D       = tileslist(D);
     for dd = 1:numel(D)
-        reply='';
+        reply   = '';
         Fexists = false;
         if exist( fullfile(DIR_OUT,D{dd}), 'file' ), Fexists=true; end
         if OVERWRITE
@@ -129,4 +124,3 @@ for tt = fSD:fED
         end
     end
 end
-

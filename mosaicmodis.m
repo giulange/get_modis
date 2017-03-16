@@ -1,14 +1,13 @@
 %% mosaic all tiles of the same day for all days found in folder
 % See this useful link:
 %   https://jgomezdans.github.io/stitching-together-modis-data.html
-
 %% PARs
 %% -- NON-PARAMETRIC
 DIR_OUT     = '/media/DATI/db-backup/MODIS/vrt';
 %% -- PARAMETRIC
 DIR_IN      = '/media/DATI/db-backup/MODIS/hdf-it/snowcover';
 PRODUCT     = 'MYD10A1.006';% { MOD13Q1.006 , MYD10A1.006 ,   }
-YEARS       = 2003;% {2004; 2001:2017; ...}
+YEARS       = 2002:2016;% {2004; 2001:2017; ...}
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};
 BAND        = 'NDSI_Snow_Cover';%
 %        ...:: MOD13Q1.006 ::...
@@ -21,7 +20,7 @@ BAND        = 'NDSI_Snow_Cover';%
 %                   NDSI_Snow_Cover_Algorithm_Flags_QA, NDSI,
 %                   Snow_Albedo_Daily_Tile, orbit_pnt, granule_pnt }
 SDOY        = 1;
-EDOY        = 2;% { 2, 366 }
+EDOY        = 366;% { 2, 366 }
 %% pre
 Fpoint      = strfind(PRODUCT,'.');
 LIST        = dir( fullfile(DIR_IN,[PRODUCT(1:Fpoint-1),'*',PRODUCT(Fpoint+1:end),'*.hdf']) );
@@ -112,7 +111,7 @@ for y=1:numel(YEARS)
     for d=1:numel(uaDays)
         % if available day is outside defined range, skip
         if str2double(uaDays{d})<SDOY || str2double(uaDays{d})>EDOY
-            fprintf('\tDOY=%s skipped!\n',uaDays{d})
+            %fprintf('\tDOY=%s skipped!\n',uaDays{d})
             continue
         end    
         fprintf('\tIncluding DOY=%s ...\n',uaDays{d})
@@ -145,11 +144,34 @@ for y=1:numel(YEARS)
         for t=1:numel(TILES)
             % |01| gdalinfo MOD13Q1.A2014225.h18v04.006.2015289162913.hdf| grep NDVI | grep '_NAME'
             fprintf('Running...\n\t%s\n', gdalinfo_getBandName(YEARS(y),uaDays{d},TILES{t}) )
-            [~,reply] = system( gdalinfo_getBandName(YEARS(y),uaDays{d},TILES{t}) );
-            % check if more bands have the same base name (for instance this happens for MYD10A1.006 products
-            % where more bands show the NDSI_Snow_Cover band name!):
-            chk  = readtext(reply, ':', '', '', 'textsource');
-            Fchk = strfind(chk,TILES{t});
+            [status,reply] = system( gdalinfo_getBandName(YEARS(y),uaDays{d},TILES{t}) );
+            if status, error('%s',reply), end
+            % Check if more bands have the same base name:
+            %  (for instance this happens for MYD10A1.006 products where
+            %   more bands show the initial string NDSI_Snow_Cover in the
+            %   band name!)
+            chk  = greadtext(reply, ':', '', '', 'textsource');
+            if size(chk,1)==1
+                % reply = reply;
+            else
+                Fchk = strcmp(chk,BAND);
+                switch sum(Fchk(:))
+                    case 1
+                        %good!
+                        % select the proper BAND name from the list found
+                        [rr,~] = find( Fchk );
+                        reply2 = chk{rr,1};
+                        for ii=2:size(chk,2)
+                            reply2 = [reply2,':',chk{rr,ii}]; %#ok<AGROW>
+                        end
+                        reply = reply2;
+                    case 0
+                        error('Current BAND name (%s) not found.',BAND)
+                    otherwise
+                        error('More BAND names (%s) were found.',BAND)
+                end
+            end
+            % use the full & unique band name found:
             fprintf('%s\n',reply)
             % remove trailing blanks from end of string
             reply=deblank(reply);
