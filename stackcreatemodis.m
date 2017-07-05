@@ -6,13 +6,15 @@
 %% -- NON-PARAMETRIC
 DIR_IN      = '/media/DATI/db-backup/MODIS/tif';
 DIR_OUT     = '/media/DATI/db-backup/MODIS/stack';
-PRODUCT     = 'MOD13Q1.006';
-DOY_LIST    = { '001';'017';'033';'049';'065';'081';'097';'113';'129';...
-                '145';'161';'177';'193';'209';'225';'241';'257';'273';...
-                '289';'305';'321';'337';'353'; };
 %% -- PARAMETRIC
-YEARS       = 2001:2017; % { 2004; 2001:2017 }
-BAND        = 'VIQuality';% { NDVI; VIQuality; pixelreliability; ... }
+PRODUCT     = 'MYD10A1.006';% { MOD13Q1.006 , MYD10A1.006 }
+BAND        = 'NDSI_Snow_Cover';% { NDVI, VIQuality, pixelreliability, NDSI_Snow_Cover }
+YEARS       = 2003:2016; % { 2004; 2001:2017 }
+% DOY_LIST    = { '001';'017';'033';'049';'065';'081';'097';'113';'129';...
+%                 '145';'161';'177';'193';'209';'225';'241';'257';'273';...
+%                 '289';'305';'321';'337';'353'; };
+% 
+DOY_LIST=cell(366,1); for ii=1:366,DOY_LIST{ii}=sprintf('%03d',ii);end
 iFORMAT     = 'tif';% input  format for end-product files
 oFORMAT     = 'tif';% output format for end-product files
 OVERWRITE   = false;% false:tif files already existent are skipped; true:tif are overwritten
@@ -33,9 +35,24 @@ gdal_merge = @(iTifs,oTif) ['gdal_merge.py -separate -o ',fullfile(DIR_OUT,oTif)
 
 % break-down the list:
 Fp      = cell2mat( strfind(LIST,'_') );
-if sum( diff(Fp(:,1)) ) || sum( diff(Fp(:,2)) )
-    error('The code needs that every file has the same position of "." in LIST!')
+if sum( sum(diff(Fp))~=0 )
+    error('The code needs that every file has the same position of "_" in LIST!')
 end
+% by-passing the previous if means that all rows are equal in Fp, then I
+% consider only the first one:
+Fp      = Fp(1,:);
+
+% '_A' is needed when the '_' is used within the BAND name:
+FA_     = cell2mat( strfind(LIST,'_A') );
+if sum( sum(diff(FA_))~=0 )
+    error('The code needs that every file has the same position of "_A" in LIST!')
+end
+% by-passing the previous if means that all rows are equal in Fp, then I
+% consider only the first one:
+FA_     = FA_(1,:);
+
+sFp     = find(Fp==FA_);
+Fp      = Fp(sFp:sFp+1);
 
 L       = char(LIST);
 UL      = unique(cellstr(L(:,Fp(1,1)+2:Fp(1,2)-4)));
@@ -136,27 +153,30 @@ for y=1:numel(YEARS)
         isFine = ~isempty(strfind(reply,'100')) && ~isempty(strfind(reply,'done'));
         fprintf('%s=%d\n','good',isFine)
     else
-        fprintf('%5s%s=%s\n','','good',false)
+        fprintf('%5s%s=%d\n','','good',false)
     end
     fprintf('\n')
 end
 %% print in file, while gdal_merge.py does not work on gou-pedology!
-
-fid = fopen( fullfile(DIR_OUT,'batch_gdalmerge') ,'w');
-fprintf(fid,'#!/bin/bash\n');
-for ii=1:numel(CMD)
-    if ~isempty( CMD{ii} )
-        % ECHO:
-        fprintf(fid,'echo %s\n',CMD{ii});
-        % COMMAND:
-        fprintf(fid,'%s\n',CMD{ii});
+if ~isempty( CMD{1} )
+    fid = fopen( fullfile(DIR_OUT,'batch_gdalmerge') ,'w');
+    fprintf(fid,'#!/bin/bash\n');
+    for ii=1:numel(CMD)
+        if ~isempty( CMD{ii} )
+            % ECHO:
+            fprintf(fid,'echo %s\n',CMD{ii});
+            % COMMAND:
+            fprintf(fid,'%s\n',CMD{ii});
+        end
     end
+    fclose(fid);
+    clear fid
+    eval( ['!chmod +x ',fullfile(DIR_OUT,'batch_gdalmerge')] )
+    warning('Run the following script from ftp-pedology as root:\n%s',...
+            strrep( fullfile(DIR_OUT,'batch_gdalmerge'),'DATI','FTP' )...
+           )
+else
+    error('Unable to create a stack!')
 end
-fclose(fid);
-clear fid
-eval( ['!chmod +x ',fullfile(DIR_OUT,'batch_gdalmerge')] )
-warning('Run the following script from ftp-pedology as root:\n%s',...
-        strrep( fullfile(DIR_OUT,'batch_gdalmerge'),'DATI','FTP' )...
-       )
 %% go back to starting path
 % cd( curr_dir )

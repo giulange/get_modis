@@ -5,7 +5,8 @@ function M = phenologicalmetrics(vifilt,viraw)
 %   vifilt    : Vegetation index (e.g. NDVI) after filtering using whatever
 %               model (ARMA, harmonic regression, Savitzky Golay filter,
 %               etc.).
-%   viraw     : Raw vegetation index values as reported in the MODIS grids.
+%   viraw     : Raw vegetation index values as reported in the (MODIS)
+%               grids.
 % 
 % OUTPUTS
 %   M         : Structure array with all phenological metrics as reported
@@ -16,27 +17,34 @@ function M = phenologicalmetrics(vifilt,viraw)
 %   paper:
 %       Bradley et al., "Measuring phenological variability from satellite
 %       imagery", Journal of Vegetation Science, 5: 703-714, 1994.
+%   Modality is not yet implemented.
+%   Further, the Rate of Change is also added coming from the paper :
+%       
 %   _______________________________________________________________________
-%      Metric                         Phenological interpretation
+%      ID   Metric                         Phenological interpretation
 %   _______________________________________________________________________
 %      
 %      Temporal NDVI metrics
-%      Time of onset of greenness     Beginning of measureable photosynthesis
-%      Time of end of greenness       Cessation of measureable photosynthesis
-%      Duration of greenness          Duration of photosynthetic activity
-%      Time of maximum NDVI           Time of maximum measureable photosynthesis
+%      OnP    Time of onset of greenness   Beginning of measureable photosynthesis
+%      EndP   Time of end of greenness     Cessation of measureable photosynthesis
+%      DurP   Duration of greenness        Duration of photosynthetic activity
+%      MaxP   Time of maximum NDVI         Time of maximum measureable photosynthesis
 % 
 %      NDVI-value metrics
-%      Value of onset of greenness    Level of photosynthetic activity at beginning of growing season
-%      Value of end of greenness      Level of photosynthetic activity at end of growing season
-%      Value of maximum NDVI          Maximum measureable level of photosynthetic activity
-%      Range of NDVI                  Range of measureable photosynthetic activity
+%      OnV    Value of onset of greenness  Level of photosynthetic activity
+%                                           at beginning of growing season
+%      EndV   Value of end of greenness    Level of photosynthetic activity
+%                                           at end of growing season 
+%      MaxV   Value of maximum NDVI        Maximum measureable level of photosynthetic activity
+%      RanV   Range of NDVI                Range of measureable photosynthetic activity
 % 
 %      Derived metrics
-%      Time-integrated NDVI           Net primary production
-%      Rate of greenup                Acceleration of photosynthesis
-%      Rate of senescence             Deceleration of photosynthesis
-%      Modality                       Periodicity of photosynthetic activity
+%      TINDVI Time-integrated NDVI         Net primary production
+%      RtUp   Rate of greenup              Acceleration of photosynthesis
+%      RtDn   Rate of senescence           Deceleration of photosynthesis
+%      ??     Modality                     Periodicity of photosynthetic activity
+% #    RaChMx Rate of change               Maximal slope between any two successive 
+%                                           bimonthly NDVI values during green-up
 %   _______________________________________________________________________
 
 %% PRE
@@ -75,6 +83,13 @@ DurP = EndP-OnP;
 RanV = MaxV - min([OnV,EndV]);
 RtUp = (MaxV-OnV ) / (MaxP - OnP );
 RtDn = (MaxV-EndV) / (EndP - MaxP);
+% Rate of Change
+%   Definition: Estimated as the maximal slope between any two successive
+%               bimonthly NDVI values during green-up.
+%   See: Ecology. 2007, DOI: 10.1890/06-0875, "Early onset of vegetation
+%        growth vs. rapid green up: Impacts on juvenile mountain
+%        ungulates", Pettorelli et al.
+RaChMx = max( diff( vifilt(OnP:MaxP) ) );
 
 % TINDVI = trapz(VI(OnP:EndP));
 yv = [vifilt(OnP:EndP);vifilt(OnP)];
@@ -118,17 +133,17 @@ if isShifted
     EndP=EndP-(n-Fmn+1); if EndP<1, EndP=n+EndP; end
     MaxP=MaxP-(n-Fmn+1); if MaxP<1, MaxP=n+MaxP; end
 end
-M.OnP = OnP;
-M.OnV = OnV;
-M.EndP = EndP;
-M.EndV = EndV;
-M.MaxP = MaxP;
-M.MaxV = MaxV;
-M.DurP = DurP;
-M.RanV = RanV;
-M.RtUp = RtUp;
-M.RtDn = RtDn;
-M.TINDVI = TINDVI;
-
+M.OnP   = OnP;
+M.OnV   = OnV;
+M.EndP  = EndP;
+M.EndV  = EndV;
+M.MaxP  = MaxP;
+M.MaxV  = MaxV;
+M.DurP  = DurP;
+M.RanV  = RanV;
+M.RtUp  = RtUp;
+M.RtDn  = RtDn;
+M.RaChMx= RaChMx;
+M.TINDVI= TINDVI;
 %% return
 end

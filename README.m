@@ -80,12 +80,10 @@
 % 
 %   (3) convertmodis.m:: It converts the .vrt files into GTiff (or other
 %                        format as required) applying the required
-%                        reference system. The developer is planning to set
-%                        an option with which create yearly stacks for a
-%                        ROI. It was planned to perform also the stack
-%                        creation, but the extraction of info from .vrt
-%                        does not work and the gdal_merge.py does not work
-%                        on gpu-pedology. This way I created the
+%                        reference system. It was planned to perform also
+%                        the stack creation, but the extraction of info
+%                        from .vrt does not work and the gdal_merge.py does
+%                        not work on gpu-pedology. This way I created the
 %                        stackcreatemodis script to deal with this task.
 %               case#1
 %                        fnc() ––> gdalbuildvrt=@gdalbuildvrt()

@@ -92,7 +92,7 @@ list = LIST_SAT;
 if status
     error('%s',reply)
 else
-    fprintf('Following temporary items were removed:\n%s',reply)
+%     fprintf('Following temporary items were removed:\n%s',reply)
 end
 %% return
 end

@@ -7,7 +7,7 @@ DIR_OUT     = '/media/DATI/db-backup/MODIS/vrt';
 %% -- PARAMETRIC
 DIR_IN      = '/media/DATI/db-backup/MODIS/hdf-it/snowcover';
 PRODUCT     = 'MYD10A1.006';% { MOD13Q1.006 , MYD10A1.006 ,   }
-YEARS       = 2002:2016;% {2004; 2001:2017; ...}
+YEARS       = 2003:2016;% {2004; 2001:2017; ...}
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};
 BAND        = 'NDSI_Snow_Cover';%
 %        ...:: MOD13Q1.006 ::...
@@ -59,16 +59,16 @@ Fp      = cell2mat( strfind(LIST,'.') );
 if sum( diff(Fp(:,1)) ) || sum( diff(Fp(:,2)) )
     error('The code needs that every file has the same position of "." in LIST!')
 end
+Fp      = Fp(1,:);% the string A2002185 is between Fp(1) and Fp(2)
 
 L       = char(LIST);
-UL      = unique(cellstr(L(:,Fp(1,1)+1:Fp(1,2)-1)));
+UL      = unique(cellstr(L(:,Fp(1)+1:Fp(2)-1)));
 
 % available years:
 aYears  = zeros(size(UL));
 for ii=1:numel(UL)
     aYears(ii) = str2double( UL{ii}(2:5) );
 end
-
 % find unique years in the DIR:
 uaY     = unique(aYears);
 
@@ -97,7 +97,7 @@ for y=1:numel(YEARS)
     aDays = cell(size(LIST));
     for ii=1:numel(LIST)
         if ~isempty(strfind(LIST{ii},['A',num2str( YEARS(y) )]))
-            aDays{ii} = LIST{ii}(Fp(1,1)+6:Fp(1,2)-1);
+            aDays{ii} = LIST{ii}(Fp(1)+6:Fp(2)-1);
         else
             aDays{ii} = '';
         end
@@ -122,17 +122,25 @@ for y=1:numel(YEARS)
         aTiles = cell(size(TILES));
         tt=0;
         for t=1:numel(Ftiles)
-            if isempty(Ftiles{t}), continue, end
+            if isempty(Ftiles{t})
+                continue
+            end
             tt = tt+1;
-            aTiles{tt} = LIST{t}(Fp(1,2)+1:Fp(1,3)-1);
+            aTiles{tt} = LIST{t}(Fp(2)+1:Fp(3)-1);
         end
-        
+        % check that none of TILES is missing, otherwise correct:
+        for t=1:numel(TILES)
+            if isempty(aTiles{t})
+                aTiles{t} = '';% correction, otherwise setxor would have issues!
+            end
+        end
+                        
         % check that available tiles in current year and doy are exactly
         % those tiles user need:
-        [Ft,iA,iB] = setxor(aTiles,TILES);
-        if ~isempty(iB)
-            warning('The following tiles are missing in year=%d and DOY=%s\n\n')
-            for jj=1:numel(iB),fprintf('\t%s ',TILES{iB}), end
+        [Ft,iA2,iB2] = setxor(aTiles,TILES);
+        if ~isempty(iB2)
+            warning('The following tiles are missing in year=%d and DOY=%s\n\n',YEARS(y),uaDays{d})
+            for jj=1:numel(iB2),fprintf('\t%s ',TILES{iB2}), end
             fprintf('\n')
             continue
         end

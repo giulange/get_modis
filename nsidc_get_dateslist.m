@@ -42,7 +42,7 @@ wget_index  = @(link,oDir) ['wget ',basic_pars,' -c -np -e robots=off -P ',oDir,
 if status, error('%s',reply), end
 html = greadtext( fullfile(DIR_TMP,product) );
 if size(html,2)>1
-    warning('The html cell array has more than one column, only the first one is retained!')
+%     warning('The html cell array has more than one column, only the first one is retained!')
     html = html(:,1);
 end
 
@@ -113,7 +113,7 @@ list = LIST_DATES;
 if status
     error('%s',reply)
 else
-    fprintf('Following temporary items were removed:\n%s',reply)
+%     fprintf('Following temporary items were removed:\n%s',reply)
 end
 %% return
 end

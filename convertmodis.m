@@ -2,13 +2,13 @@
 %% -- NON-PARAMETRIC
 DIR_IN      = '/media/DATI/db-backup/MODIS/vrt';
 DIR_OUT     = '/media/DATI/db-backup/MODIS/tif';
-DIR_STACK   = '/media/DATI/db-backup/MODIS/stack';
-PRODUCT     = 'MOD13Q1.006';
+% DIR_STACK   = '/media/DATI/db-backup/MODIS/stack';
+%% -- PARAMETRIC
+PRODUCT     = 'MYD10A1.006';% { MOD13Q1.006 , MYD10A1.006 }
+BAND        = 'NDSI_Snow_Cover';% { NDVI, VIQuality, pixelreliability, NDSI_Snow_Cover }
+YEARS       = 2002:2016;% { 2004, 2001:2017 }
 SDOY        = 1;
 EDOY        = 366;
-%% -- PARAMETRIC
-YEARS       = 2001:2017;% { 2004, 2001:2017 }
-BAND        = 'VIQuality';% {NDVI, VIQuality, pixelreliability }
 REFSYST     = 'EPSG:4326';% target reference system to be applyed
 FORMAT      = 'GTiff';% output format for end-product files
 viaVRT      = false;% true:it creates a stack (via .vrt); false:one tif for each DOY, then create stack!
@@ -18,7 +18,7 @@ createStack = false;% switch to skip stack creation (use the stackcreatemodis fu
 if viaVRT
     error(['The creation of stacks via .vrt does not work!\n',...
            'Run the other procedure using viaVRT=false.\n',...
-           'After, run stackcreatemodis which creates a script to run on ftp-pedology as root.'])
+           'After, run stackcreatemodis which creates a script to run on ftp-pedology as root.']) %#ok<UNRCH>
 end
 Fpoint      = strfind(PRODUCT,'.');
 LIST        = dir( fullfile(DIR_IN, [BAND,'_A*_',PRODUCT,'.vrt']) );
@@ -72,12 +72,27 @@ gdal_merge = @(iTifs,oTif) ['gdal_merge.py -separate -o ',fullfile(DIR_STACK,oTi
 
 % break-down the list:
 Fp      = cell2mat( strfind(LIST,'_') );
-if sum( diff(Fp(:,1)) ) || sum( diff(Fp(:,2)) )
-    error('The code needs that every file has the same position of "." in LIST!')
+if sum( sum(diff(Fp))~=0 )
+    error('The code needs that every file has the same position of "_" in LIST!')
 end
+% by-passing the previous if means that all rows are equal in Fp, then I
+% consider only the first one:
+Fp      = Fp(1,:);
+
+% '_A' is needed when the '_' is used within the BAND name:
+FA_     = cell2mat( strfind(LIST,'_A') );
+if sum( sum(diff(FA_))~=0 )
+    error('The code needs that every file has the same position of "_A" in LIST!')
+end
+% by-passing the previous if means that all rows are equal in Fp, then I
+% consider only the first one:
+FA_     = FA_(1,:);
+
+sFp     = find(Fp==FA_);
+Fp      = Fp(sFp:sFp+1);
 
 L       = char(LIST);
-UL      = unique(cellstr(L(:,Fp(1,1)+2:Fp(1,2)-4)));
+UL      = unique(cellstr(L(:,Fp(1)+2:Fp(2)-4)));
 % find unique years in the DIR:
 uaY     = str2double(UL);
 
@@ -110,7 +125,7 @@ for y=1:numel(YEARS)
     uaDays = cell(size(yLIST));
     for ii=1:numel(yLIST)
         if ~isempty(strfind(yLIST{ii},['A',num2str( YEARS(y) )]))
-            uaDays{ii} = yLIST{ii}(Fp(1,1)+6:Fp(1,2)-1);
+            uaDays{ii} = yLIST{ii}(Fp(1)+6:Fp(2)-1);
         else
             uaDays{ii} = '';
         end
@@ -119,7 +134,7 @@ for y=1:numel(YEARS)
 
     if viaVRT
         % open file
-        fid = fopen(FIL_LIST,'w');
+        fid = fopen(FIL_LIST,'w'); %#ok<UNRCH>
     end
     % loop on all available days in folder and skip those days outside the
     % range SDOY:EDOY
@@ -159,7 +174,7 @@ for y=1:numel(YEARS)
     end
         
     if viaVRT
-        fclose(fid);
+        fclose(fid); %#ok<UNRCH>
         clear fid;
 
         % |01| gdalbuildvrt: composition of yearly stack in .vrt
@@ -197,7 +212,7 @@ for y=1:numel(YEARS)
         if createStack
             % e.g. 'NDVI_A2001-MOD13Q1.006.tif'
             %fprintf('\t%s\n','The yearly stack creation is de-activated because gdal_merge.py currently does not work!')
-            fprintf('\t%s\n','Yearly stack creation:')
+            fprintf('\t%s\n','Yearly stack creation:') %#ok<UNRCH>
             oTif = [BAND,'_A',num2str(YEARS(y)),'_',PRODUCT,'.tif'];
             EXISTS=false;
             if exist(fullfile(DIR_STACK,oTif),'file'), EXISTS=true; end
@@ -214,4 +229,3 @@ for y=1:numel(YEARS)
         end
     end
 end
-

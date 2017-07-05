@@ -1,5 +1,20 @@
 %% DEVELOP THE CODE TO DOWNLOAD SNOW COVER DATA FROM AUTHENTICATED PORTAL
 % For few details see the README.wget file.
+%% MODIS File Naming Convention
+%   Example file name:
+%       MYD[PID].A[YYYY][DDD].h[NN]v[NN].[VVV].[yyyy][ddd][hhmmss].hdf
+% 
+%     MYD           MODIS/Aqua
+%     PID           Product ID
+%     A             Acquisition date follows
+%     YYYY          Acquisition year
+%     DDD           Acquisition day of year
+%     h[NN]v[NN]	Horizontal tile number and vertical tile number (see Grid for details.)
+%     VVV           Version (Collection) number
+%     yyyy          Production year
+%     ddd           Production day of year
+%     hhmmss        Production hour/minute/second in GMT
+%     .hdf          HDF-EOS formatted data file
 %% wget parameters:
 %   -p          This option causes Wget to download all the files that are
 %               necessary to properly display a given HTML page.  This
@@ -50,8 +65,8 @@ basic_pars  = '--load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --kee
 %% -- PARAMETRIC
 PLATFORM    = 'MOSA';% { MOSA, MOST, ...  }
 PRODUCT     = 'MYD10A1.006';% { MYD10A1.006 }
-Sdate       = '2002.07.04';% yyyy.mm.dd
-Edate       = '2017.01.01';% yyyy.mm.dd
+Sdate       = '2003.03.14';% yyyy.mm.dd % { 2002.07.04 , ... }
+Edate       = '2003.03.15';% yyyy.mm.dd % { 2017.01.01 , ... }
 TILES       = {'h18v04','h18v05','h19v04','h19v05'};
 DIR_OUT     = '/media/DATI/db-backup/MODIS/hdf-it/snowcover';
 FIL_FORMAT  = '.hdf';
@@ -72,8 +87,21 @@ ED          = datenum( Edate, 'yyyy.mm.dd' );
 AD          = datenum( dateslist, 'yyyy.mm.dd' );
 fSD         = find(AD==SD);
 fED         = find(AD==ED);
+% CHECK DATES:
+%   Start:
+if isempty(fSD), error('Start date not found at %s.',[PORTAL,'/',PLATFORM,'/',PRODUCT]), end
+%   End:
+if isempty(fED), error(  'End date not found at %s.',[PORTAL,'/',PLATFORM,'/',PRODUCT]), end
+%   Duplicates:
 if numel(fSD)>1 || numel(fED)>1
     error('Duplicated dates for platform:%s and product:%s',PLATFORM,PRODUCT)
+end
+%   Missing dates at PORTAL/PLATFORM/PRODUCT location:
+Fdad = find(diff(AD)>1);
+MISSING_DATES_ON_SERVER = cell( numel(Fdad), 1 );
+for ii = 1:numel(Fdad)
+    Fnum = datenum( dateslist(Fdad(ii):Fdad(ii)+1), 'yyyy.mm.dd' );
+    MISSING_DATES_ON_SERVER{ii} = datestr( Fnum(1)+1:Fnum(2)-1 );
 end
 
 for tt = fSD:fED
@@ -96,6 +124,10 @@ for tt = fSD:fED
             end
             D(ii) = true;
         end
+    end
+    if ~sum(D)
+        warning( 'Current DOY=%s is not available on the server!', dateslist{tt} )
+        continue
     end
     D       = tileslist(D);
     for dd = 1:numel(D)

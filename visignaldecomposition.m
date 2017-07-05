@@ -1,12 +1,18 @@
 function S = visignaldecomposition( ts, period, plotme )
-% 
+% S = visignaldecomposition( ts, period, plotme )
 % 
 % INPUTS
+%   ts      : Time series.
+%   period  : Periodicity of the seasonal effect.
+%   plotme  : Flag to allow/avoid plots.
 % 
 % OUTPUTS
-% 
+%   S       : Output signal composing the trend and harmonic regression
+%             components.
 % 
 % DESCRIPTION
+%   This function applied a harmonic regression after detrending the ts
+%   signal.
 
 %% PRE
 if nargin<3
